@@ -22,7 +22,7 @@ export function ChatWindow() {
     },
     body: {
       room_id: undefined, // since we don't need chat persistence, we can omit this. KorinAI will generate a random room_id for us.
-      participantEmail: "user@email.com", // need to replace with actual Korin User email
+      participantEmail: process.env.NEXT_PUBLIC_KORINAI_PARTICIPANT_EMAIL,
     },
   });
 

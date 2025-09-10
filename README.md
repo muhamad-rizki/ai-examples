@@ -1,15 +1,14 @@
-# ChatGPT Clone Example
+# KorinAI API Integration Example
 
-A modern, responsive ChatGPT clone built with Next.js and TypeScript, featuring a clean UI with dark mode support.
+This repository provides example implementations for integrating with the KorinAI API. It demonstrates how to set up server-side API routes in Next.js to proxy requests to the KorinAI chat and prompt generation endpoints.
 
 ## ✨ Features
 
-- **Real-time Chat**: Interactive chat interface with message history
-- **Markdown Support**: Messages are rendered with markdown formatting
-- **Responsive Design**: Works on all device sizes
-- **Dark Mode**: Built-in dark/light theme support
-- **Type Safety**: Written in TypeScript for better developer experience
-- **Modern UI**: Clean, minimalist interface inspired by ChatGPT
+- **Chat API Proxy**: Server-side proxy for KorinAI's chat API with proper error handling and streaming support
+- **Prompt Generation**: Example implementation for generating high-quality prompts using KorinAI
+- **Type Safety**: Built with TypeScript for better developer experience
+- **Environment Configuration**: Secure handling of API keys and configuration
+- **Streaming Support**: Efficient handling of server-sent events (SSE) for real-time responses
 
 ## 🚀 Getting Started
 
@@ -17,13 +16,14 @@ A modern, responsive ChatGPT clone built with Next.js and TypeScript, featuring 
 
 - Node.js 18.0.0 or later
 - npm, yarn, or pnpm
+- KorinAI API key
 
 ### Installation
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/chatgpt-clone.git
-   cd chatgpt-clone
+   git clone https://github.com/your-org/ai-examples.git
+   cd ai-examples
    ```
 
 2. Install dependencies:
@@ -35,32 +35,81 @@ A modern, responsive ChatGPT clone built with Next.js and TypeScript, featuring 
    pnpm install
    ```
 
-3. Run the development server:
+3. Set up environment variables:
+   Copy `.env.example` to `.env.local` and update with your KorinAI API credentials:
+   ```env
+   KORINAI_API_KEY=your_api_key_here
+   KORINAI_PARTICIPANT_EMAIL=participant@example.com
+   ```
+
+4. Run the development server:
    ```bash
    npm run dev
    ```
-   Open [http://localhost:3000](http://localhost:3000) in your browser to see the result.
+   The API routes will be available at:
+   - `POST /api/chat` - Chat API proxy
+   - `POST /api/prompt` - Prompt generation endpoint
+
+## 🛠️ API Endpoints
+
+### Chat API Proxy (`/api/chat`)
+
+Proxies requests to the KorinAI chat API with support for:
+- Server-sent events (SSE) streaming
+- Authentication header injection
+- Error handling and response forwarding
+- Request/response transformation
+
+### Prompt Generation (`/api/prompt`)
+
+Generates high-quality prompts using KorinAI's chat API:
+- Takes a user goal as input
+- Uses a system instruction for prompt engineering
+- Returns a well-structured, actionable prompt
+- Handles errors and edge cases gracefully
 
 ## 🛠️ Tech Stack
 
-- **Framework**: Next.js 14
-- **Styling**: Tailwind CSS
+- **Runtime**: Node.js 18+
+- **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
-- **State Management**: React Hooks
-- **Icons**: Lucide React
+- **API**: Edge-compatible API routes
 
-## 📝 Notes
+## 📝 Usage Examples
 
-- This is a frontend-only implementation. To connect to a real AI model, you'll need to integrate with an API like OpenAI's GPT-4.
-- The chat history is stored in the browser's memory and will be cleared on page refresh.
-- Dark mode is automatically detected based on the system preference.
-   # or
-   yarn dev
-   # or
-   pnpm dev
-   ```
+### Chat API Request
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+```typescript
+const response = await fetch('/api/chat', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    roomId: 'unique-room-id',
+    messages: [
+      {
+        role: 'user',
+        parts: [{ type: 'text', text: 'Hello, KorinAI!' }]
+      }
+    ]
+  })
+});
+```
+
+### Prompt Generation Request
+
+```typescript
+const response = await fetch('/api/prompt', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    query: 'I need a prompt for generating product descriptions'
+  })
+});
+```
 
 ## 🛠 Scripts
 
@@ -74,30 +123,32 @@ A modern, responsive ChatGPT clone built with Next.js and TypeScript, featuring 
 
 ```
 /
-├── app/                    # App router
-│   ├── api/               # API routes
-│   ├── dashboard/         # Dashboard pages
-│   ├── auth/              # Authentication pages
-│   └── page.tsx           # Home page
-├── components/            # Reusable components
+├── app/
+│   ├── api/
+│   │   ├── chat/          # Chat API proxy route
+│   │   │   └── route.ts   # Handles chat completions
+│   │   └── prompt/        # Prompt generation route
+│   │       └── route.ts   # Handles prompt generation
+│   └── (other app routes)
+├── components/            # Reusable UI components
 ├── lib/                   # Utility functions
-├── models/                # Database models
-├── public/                # Static files
-└── styles/                # Global styles
+└── public/                # Static assets
 ```
 
 ## 🌐 Deployment
 
 ### Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Deploy to Vercel for a serverless deployment with edge functions:
 
-### Docker
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyour-org%2Fai-examples)
 
-1. Build the Docker image:
-   ```bash
-   docker build -t customer-support-app .
-   ```
+### Environment Variables
+
+Make sure to set these environment variables in your deployment:
+
+- `KORINAI_API_KEY`: Your KorinAI API key
+- `KORINAI_PARTICIPANT_EMAIL`: Email for participant identification
 
 2. Run the container:
    ```bash

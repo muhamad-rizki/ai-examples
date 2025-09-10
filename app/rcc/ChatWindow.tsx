@@ -1,6 +1,6 @@
 "use client";
 
-import { EmptyStateHeader } from "@/app/[...dashboard]/rcc/EmptyStateHeader";
+import { EmptyStateHeader } from "@/app/rcc/EmptyStateHeader";
 import { Action, Actions } from "@/components/ai-elements/actions";
 import {
   Conversation,
@@ -33,45 +33,28 @@ import {
   SourcesContent,
   SourcesTrigger,
 } from "@/components/ai-elements/sources";
-import { CHAT_MESSAGES_UPDATED } from "@/lib/chat/events";
-import { loadMessages, saveMessages, updateRoomMeta } from "@/lib/chat/storage";
-import { generateRandomName } from "@/lib/chat/utils";
 import { cn } from "@/lib/utils";
 import { useChat } from "@ai-sdk/react";
 import { ChatStatus, DefaultChatTransport, generateId, UIMessage } from "ai";
 import { CopyIcon, RefreshCcwIcon } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { mutate as swrMutate } from "swr";
+import { Fragment, useMemo, useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function ChatWindow({ roomId }: { roomId?: string }) {
-  const router = useRouter();
-  const pathname = usePathname();
   const [input, setInput] = useState("");
   const [currentRoomId, setCurrentRoomId] = useState(roomId || generateId());
-  const ignoreNextMessagesEvent = useRef(false);
+  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
 
   const networkTransport = new DefaultChatTransport({
-    api: "https://api.korinai.com/api/chat",
+    api: "/api/chat",
     body: {
       roomId: currentRoomId,
-      participantEmail: process.env.NEXT_PUBLIC_KORINAI_PARTICIPANT_EMAIL,
-    },
-    headers: {
-      Authorization: `Bearer ${process.env.NEXT_PUBLIC_KORINAI_API_KEY}`,
     },
   });
 
-  const { messages, setMessages, regenerate, sendMessage, status } = useChat({
+  const { messages, regenerate, sendMessage, status } = useChat({
     transport: networkTransport,
     id: currentRoomId,
-    onFinish: ({ messages }) => {
-      // persist messages and navigate
-      saveMessages(currentRoomId, messages);
-      setTimeout(() => {
-        router.push(`${basePath}/${currentRoomId}`);
-      }, 500);
-    },
   });
 
   const welcomeText = useMemo(() => {
@@ -84,64 +67,12 @@ export default function ChatWindow({ roomId }: { roomId?: string }) {
       "Let's build something great.",
     ];
     return candidates[Math.floor(Math.random() * candidates.length)];
-  }, [roomId]);
+  }, []);
 
   const welcomeEmoji = useMemo(() => {
     const emojis = ["🤖", "✨", "🚀", "💡", "🧠", "📚", "🛠️", "🌟", "🔥", "🌈"];
     return emojis[Math.floor(Math.random() * emojis.length)];
-  }, [roomId]);
-
-  const segments = useMemo(
-    () => pathname?.split("/").filter(Boolean) ?? [],
-    [pathname]
-  );
-  const basePath = useMemo(
-    () => (segments[0] === "dashboard" ? "/dashboard" : ""),
-    [segments]
-  );
-
-  // Load initial
-  useEffect(() => {
-    if (ignoreNextMessagesEvent.current) {
-      return;
-    }
-
-    if (!roomId) return;
-
-    const initial = loadMessages(roomId);
-    setMessages(initial);
-    setCurrentRoomId(roomId);
-  }, [roomId]);
-
-  // Listen for same-tab updates (e.g., previous component instance saving assistant reply after redirect)
-  useEffect(() => {
-    const onUpdated = (e: Event) => {
-      const evt = e as CustomEvent<{ roomId?: string }>;
-      if (ignoreNextMessagesEvent.current) {
-        // consume and ignore one event originating from this component's own save
-        ignoreNextMessagesEvent.current = false;
-        return;
-      }
-      if (evt.detail?.roomId === roomId) {
-        setMessages(loadMessages(roomId));
-      }
-    };
-    window.addEventListener(CHAT_MESSAGES_UPDATED, onUpdated as EventListener);
-    return () =>
-      window.removeEventListener(
-        CHAT_MESSAGES_UPDATED,
-        onUpdated as EventListener
-      );
-  }, [roomId]);
-
-  // Persist (avoid writing empty arrays on initial mount/navigation)
-  useEffect(() => {
-    if (!roomId) return;
-    if (messages.length === 0) return;
-    // mark to ignore the next event triggered by our own save
-    ignoreNextMessagesEvent.current = true;
-    saveMessages(roomId, messages);
-  }, [messages, roomId]);
+  }, []);
 
   const handleSubmit = async (message: PromptInputMessage) => {
     const hasText = Boolean(message.text && message.text.trim());
@@ -151,24 +82,33 @@ export default function ChatWindow({ roomId }: { roomId?: string }) {
     const userText = hasText
       ? (message.text as string)
       : "Sent with attachments";
-    // Determine target room id (create if not provided)
-    const createdId = roomId ? undefined : currentRoomId;
-    const targetId = roomId ?? createdId!;
     const userMsg: UIMessage = {
       id: generateId(),
       role: "user",
       parts: [{ type: "text", text: userText }],
     };
-    ignoreNextMessagesEvent.current = true;
-
-    setCurrentRoomId(targetId);
-    sendMessage(userMsg, { body: { roomId: targetId } });
-
-    // Ensure room exists and name it with a random title on first submit
-    updateRoomMeta(targetId, generateRandomName());
-    // Notify SWR listeners to refresh sidebar list immediately
-    swrMutate("chat_rooms");
+    setCurrentRoomId(currentRoomId);
+    sendMessage(userMsg, { body: { roomId: currentRoomId } });
     setInput("");
+  };
+
+  // Insert the suggested prompt into the input using the /api/prompt helper
+  const handleQuickPromptClick = async (query: string) => {
+    try {
+      if (isGeneratingPrompt) return;
+      setIsGeneratingPrompt(true);
+      const res = await fetch("/api/prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { prompt?: string };
+      if (data?.prompt) setInput(data.prompt);
+    } catch {
+    } finally {
+      setIsGeneratingPrompt(false);
+    }
   };
 
   return (
@@ -181,16 +121,71 @@ export default function ChatWindow({ roomId }: { roomId?: string }) {
                 <div className="text-center space-y-4">
                   <EmptyStateHeader emoji={welcomeEmoji} title={welcomeText} />
                   <p className="text-muted-foreground">Try prompts like:</p>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    <span className="rounded-full border px-3 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition">
-                      Summarize this article
-                    </span>
-                    <span className="rounded-full border px-3 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition">
-                      Explain a concept like I'm 5
-                    </span>
-                    <span className="rounded-full border px-3 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition">
-                      Draft an email to my team
-                    </span>
+                  <div className="mx-auto w-fit">
+                    <div
+                      className={cn(
+                        "relative flex flex-wrap justify-center gap-2",
+                        isGeneratingPrompt && "opacity-60 pointer-events-none"
+                      )}
+                    >
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={() =>
+                          handleQuickPromptClick("Summarize this article")
+                        }
+                        onKeyDown={(e) =>
+                          e.key === "Enter" &&
+                          handleQuickPromptClick("Summarize this article")
+                        }
+                        className="cursor-pointer rounded-full border px-3 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition"
+                      >
+                        Summarize this article
+                      </span>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={() =>
+                          handleQuickPromptClick("Explain a concept like I'm 5")
+                        }
+                        onKeyDown={(e) =>
+                          e.key === "Enter" &&
+                          handleQuickPromptClick("Explain a concept like I'm 5")
+                        }
+                        className="cursor-pointer rounded-full border px-3 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition"
+                      >
+                        Explain a concept like I'm 5
+                      </span>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={() =>
+                          handleQuickPromptClick("Draft an email to my team")
+                        }
+                        onKeyDown={(e) =>
+                          e.key === "Enter" &&
+                          handleQuickPromptClick("Draft an email to my team")
+                        }
+                        className="cursor-pointer rounded-full border px-3 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition"
+                      >
+                        Draft an email to my team
+                      </span>
+
+                      {isGeneratingPrompt && (
+                        <div className="absolute inset-0 flex items-center justify-center rounded-md bg-background/70 backdrop-blur-sm">
+                          <span className="text-sm text-muted-foreground">
+                            Generating prompt…
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-8 flex items-center justify-center">
+                      <div className="inline-flex items-center gap-2 rounded-lg border bg-muted/50 px-4 py-2.5 text-sm text-muted-foreground">
+                        <span className="text-base">💡</span>
+                        <span>Click any prompt to get started</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </ConversationEmptyState>
@@ -278,7 +273,9 @@ export default function ChatWindow({ roomId }: { roomId?: string }) {
                 </div>
               ))
             )}
-            {(["submitted", "streaming"] as ChatStatus[]).includes(status) && <Loader />}
+            {(["submitted", "streaming"] as ChatStatus[]).includes(status) && (
+              <Loader />
+            )}
           </ConversationContent>
           <ConversationScrollButton />
         </Conversation>
@@ -297,13 +294,15 @@ export default function ChatWindow({ roomId }: { roomId?: string }) {
               onChange={(e) => setInput(e.target.value)}
               value={input}
               placeholder="Message..."
+              disabled={isGeneratingPrompt || status === "streaming"}
+              aria-busy={isGeneratingPrompt}
             />
           </PromptInputBody>
           <PromptInputToolbar>
             <PromptInputTools />
             <PromptInputSubmit
               status={status}
-              disabled={status === "streaming"}
+              disabled={status === "streaming" || isGeneratingPrompt}
             />
           </PromptInputToolbar>
         </PromptInput>

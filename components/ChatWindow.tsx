@@ -9,22 +9,22 @@ import { Response } from "./ai-elements/response";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 
+const networkTransport = new DefaultChatTransport({
+  api: "https://api.korinai.com/api/chat",
+  headers: {
+    Authorization: "Bearer " + process.env.NEXT_PUBLIC_KORINAI_API_KEY,
+  },
+  body: {
+    room_id: undefined, // since we don't need chat persistence, we can omit this. KorinAI will generate a random room_id for us.
+    participantEmail: process.env.NEXT_PUBLIC_KORINAI_PARTICIPANT_EMAIL,
+  },
+});
+
 export function ChatWindow() {
   const [isOpen, setIsOpen] = useState(true);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const networkTransport = new DefaultChatTransport({
-    api: "https://api.korinai.com/api/chat",
-    headers: {
-      Authorization: "Bearer " + process.env.NEXT_PUBLIC_KORINAI_API_KEY,
-    },
-    body: {
-      room_id: undefined, // since we don't need chat persistence, we can omit this. KorinAI will generate a random room_id for us.
-      participantEmail: process.env.NEXT_PUBLIC_KORINAI_PARTICIPANT_EMAIL,
-    },
-  });
 
   const { messages, sendMessage } = useChat({
     transport: networkTransport,

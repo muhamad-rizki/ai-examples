@@ -10,7 +10,7 @@ export default function Home() {
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-primary-foreground font-bold">CS</span>
             </div>
-            <span className="text-xl font-bold text-foreground">KorinCentre</span>
+            <span className="text-xl font-bold text-foreground">KorinCenter</span>
           </div>
           <nav className="hidden md:flex space-x-8">
             <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
@@ -50,7 +50,7 @@ export default function Home() {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-primary-foreground font-bold">CS</span>
               </div>
-              <span className="text-xl font-bold text-foreground">KorinCentre</span>
+              <span className="text-xl font-bold text-foreground">KorinCenter</span>
             </div>
             <div className="flex space-x-6">
               <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -65,7 +65,7 @@ export default function Home() {
             </div>
           </div>
           <div className="mt-4 pt-4 border-t border-border text-center text-muted-foreground text-sm">
-            &copy; {new Date().getFullYear()} KorinCentre. All rights reserved.
+            &copy; {new Date().getFullYear()} KorinCenter. All rights reserved.
           </div>
         </div>
       </footer>

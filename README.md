@@ -1,15 +1,16 @@
-# Customer Support Example
+# KorinAI Chat Integration Example
 
-A modern, responsive customer support application built with Next.js, designed to help businesses manage customer inquiries efficiently.
+A minimal, client-side implementation of a customer support chat widget using the KorinAI API. This example demonstrates how to integrate KorinAI's chat functionality directly into your Next.js application without requiring a server-side proxy.
+
+![Chat Window](public/demo.jpeg)
 
 ## ✨ Features
 
-- **Ticket Management**: Create, view, and manage customer support tickets
-- **Real-time Updates**: Built with WebSockets for instant updates
-- **Responsive Design**: Works on desktop and mobile devices
-- **Authentication**: Secure user authentication system
-- **Admin Dashboard**: Comprehensive dashboard for support agents
-- **Email Notifications**: Automatic email updates for ticket status changes
+- **Direct API Integration**: Connects directly to KorinAI's chat API from the client-side
+- **No Server Required**: Full implementation without the need for a server-side proxy
+- **Real-time Chat**: Interactive chat interface with typing indicators
+- **Responsive Design**: Works on all device sizes
+- **Simple Integration**: Easy to add to any Next.js project
 
 ## 🚀 Getting Started
 
@@ -17,14 +18,14 @@ A modern, responsive customer support application built with Next.js, designed t
 
 - Node.js 18.0.0 or later
 - npm, yarn, or pnpm
-- MongoDB database (local or cloud)
+- A KorinAI API key
 
 ### Installation
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/customer-support-app.git
-   cd customer-support-app
+   git clone https://github.com/yourusername/korinai-chat-example.git
+   cd korinai-chat-example
    ```
 
 2. Install dependencies:
@@ -37,12 +38,10 @@ A modern, responsive customer support application built with Next.js, designed t
    ```
 
 3. Set up environment variables:
-   Create a `.env.local` file in the root directory and add the following:
+   Create a `.env.local` file in the root directory and add your KorinAI credentials:
    ```
-   MONGODB_URI=your_mongodb_connection_string
-   NEXTAUTH_SECRET=your_nextauth_secret
-   NEXTAUTH_URL=http://localhost:3000
-   EMAIL_SERVER=your_email_server_details
+   NEXT_PUBLIC_KORINAI_API_KEY=your_korinai_api_key
+   NEXT_PUBLIC_KORINAI_PARTICIPANT_EMAIL=your_email@example.com
    ```
 
 4. Run the development server:
@@ -53,8 +52,24 @@ A modern, responsive customer support application built with Next.js, designed t
    # or
    pnpm dev
    ```
+   Open [http://localhost:3000](http://localhost:3000) to see the chat widget in action.
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+## 🛠️ Implementation Details
+
+This example showcases a client-side implementation of the KorinAI chat widget using:
+- Next.js 14 App Router
+- TypeScript
+- Tailwind CSS for styling
+- KorinAI's JavaScript SDK for chat functionality
+
+The main chat component is implemented in `components/ChatWindow.tsx` and can be easily added to any page in your application.
+
+## 📝 Notes
+
+- This is a client-side only implementation that connects directly to KorinAI's API
+- No server-side code is required
+- The chat state is maintained by KorinAI's backend
+- The widget is fully responsive and can be styled to match your application's design
 
 ## 🛠 Scripts
 

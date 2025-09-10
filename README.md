@@ -2,6 +2,9 @@
 
 This repository provides example implementations for integrating with the KorinAI API. It demonstrates how to set up server-side API routes in Next.js to proxy requests to the KorinAI chat and prompt generation endpoints.
 
+![Demo](public/demo.jpeg)
+
+
 ## ✨ Features
 
 - **Chat API Proxy**: Server-side proxy for KorinAI's chat API with proper error handling and streaming support
